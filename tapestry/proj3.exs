@@ -2,7 +2,7 @@
 
 try do
   # Check if we have correct arguments
-  IO.puts("BATMAN")
+
 	if length(System.argv) != 2 do
 		raise ArgumentError
 	end
@@ -18,8 +18,10 @@ try do
 	IO.puts("The number of children is #{inspect Supervisor.count_children(Tapestryclasses.Supervisor)}")
 
   # Call to helper function to add the given number of workers to the Supervisor
-  Tapestryclasses.Utils.add_children(Tapestryclasses.Node, num_nodes, self())
+  id_to_pid = Tapestryclasses.Utils.add_children(Tapestryclasses.Node, num_nodes, self())
 
+  IO.inspect(id_to_pid)
+  IO.puts("The number of children is #{inspect Supervisor.count_children(Tapestryclasses.Supervisor)}")
 rescue
 	e in ArgumentError ->  e
 	System.stop(1)
