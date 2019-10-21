@@ -15,6 +15,9 @@ defmodule Tapestryclasses.Node do
     GenServer.cast(pid, {:send_first_message, destination, message})
   end
 
+  def update_state(pid, levels) do
+    GenServer.cast(pid, {:update_state, levels})
+  end
   def receive_message(pid, message, last_hop, destination_addr) do
     GenServer.cast(pid, {:receive_message, message, last_hop, destination_addr})
   end
@@ -50,5 +53,19 @@ defmodule Tapestryclasses.Node do
       addr
     end)
     Tapestryclasses.Node.receive_message(next_hop_addr, message, 1, destination)
+    {:noreply, node_state}
+  end
+
+  def handle_cast({:update_state, levels}, node_state) do
+    node_state = Map.put(node_state, :l1, Map.get(levels, "l1"))
+    node_state = Map.put(node_state, :l2, Map.get(levels, "l2"))
+    node_state = Map.put(node_state, :l3, Map.get(levels, "l3"))
+    node_state = Map.put(node_state, :l4, Map.get(levels, "l4"))
+    node_state = Map.put(node_state, :l5, Map.get(levels, "l6"))
+    node_state = Map.put(node_state, :l6, Map.get(levels, "l6"))
+    node_state = Map.put(node_state, :l7, Map.get(levels, "l7"))
+    node_state = Map.put(node_state, :l8, Map.get(levels, "l8"))
+    node_state = Map.put(node_state, :l9, Map.get(levels, "l9"))
+    {:noreply, node_state}
   end
 end
