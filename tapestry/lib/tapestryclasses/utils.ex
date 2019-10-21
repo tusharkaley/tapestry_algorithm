@@ -26,6 +26,21 @@ defmodule Tapestryclasses.Utils do
 
 	  # end
 		Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => :aggregator, :start => {Tapestryclasses.Aggregator, :start_link, [script_pid]}, :restart => :transient,:type => :worker})
-	end
+  end
 
+  def get_guid(pid) do
+    [head| _tail] = :ets.lookup(:id_pid_mapping, "pid_to_id")
+    pid_to_id = elem(head, 1)
+    guid = Map.get(pid_to_id, pid)
+    guid
+  end
+
+  def set_id_pid_table(id_to_pid, pid_to_id) do
+    :ets.new(:id_pid_mapping, [:named_table, read_concurrency: true])
+    :ets.insert(:id_pid_mapping, {"id_to_pid", id_to_pid})
+
+    :ets.new(:pid_id_mapping, [:named_table, read_concurrency: true])
+    :ets.insert(:pid_id_mapping, {"pid_to_id", pid_to_id})
+
+  end
 end

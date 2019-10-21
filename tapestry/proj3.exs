@@ -20,7 +20,11 @@ try do
   # Call to helper function to add the given number of workers to the Supervisor
   id_to_pid = Tapestryclasses.Utils.add_children(Tapestryclasses.Node, num_nodes, self())
 
-  IO.inspect(id_to_pid)
+  pid_to_id = Enum.reduce(id_to_pid, %{}, fn {k, vs}, acc ->
+    Map.put(acc,vs,k)
+  end)
+  Tapestryclasses.Utils.set_id_pid_table(id_to_pid, pid_to_id)
+
   IO.puts("The number of children is #{inspect Supervisor.count_children(Tapestryclasses.Supervisor)}")
 rescue
 	e in ArgumentError ->  e
