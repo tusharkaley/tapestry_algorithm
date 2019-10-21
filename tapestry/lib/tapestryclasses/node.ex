@@ -11,6 +11,9 @@ defmodule Tapestryclasses.Node do
     {:ok, node_state}
   end
 
+  def send_first_message(pid, destination, message) do
+    GenServer.cast(pid, {:send_first_message, destination, message})
+  end
 
   def receive_message(pid, message, last_hop, destination_addr) do
     GenServer.cast(pid, {:receive_message, message, last_hop, destination_addr})
@@ -21,9 +24,10 @@ defmodule Tapestryclasses.Node do
     # you have reached so send message to aggregator
     self_id = Tapestryclasses.Utils.get_guid(self())
     if self_id == destination_addr do
+      # You have reached the destination...Notify the Aggregator
       Tapestryclasses.Aggregator.collect_hops(last_hop, self())
     end
-    
+
     cond do
       last_hop == 1 -> IO.puts("Send message with an l2 hop (1 match) #{message}")
       last_hop == 2 -> IO.puts("Send message with an l3 hop (2 matches) #{message}")
@@ -35,5 +39,16 @@ defmodule Tapestryclasses.Node do
       last_hop == 8 -> IO.puts("Send message with an l9 hop (8 matches) #{message}")
     end
     {:noreply, node_state}
+  end
+
+  def handle_cast({:send_first_message, destination, message}, node_state) do
+    l1_nodes = node_state.l1
+    next_hop_addr = Enum.each(l1_nodes, fn x ->
+      addr = if x != nil do
+              x
+            end
+      addr
+    end)
+    Tapestryclasses.Node.receive_message(next_hop_addr, message, 1, destination)
   end
 end

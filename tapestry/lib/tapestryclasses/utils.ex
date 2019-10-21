@@ -2,7 +2,7 @@ defmodule Tapestryclasses.Utils do
   	@doc """
 		Function to get the child Spec for the workers
 	"""
-	def add_children(child_class, num_nodes, script_pid) do
+	def add_children(child_class, num_requests, num_nodes, script_pid) do
 
     map = Enum.reduce 1..num_nodes, %{}, fn x, acc ->
 
@@ -16,16 +16,15 @@ defmodule Tapestryclasses.Utils do
           # No collisions FTW
           String.slice(sha_id, -8, 8)
         end
-      {:ok, child} = Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => sha_id, :start => {child_class, :start_link, [x]}, :restart => :transient,:type => :worker})
+      {:ok, child} = Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => sha_id, :start => {child_class, :start_link, []}, :restart => :transient,:type => :worker})
 
       Map.put(acc, sha_id, child)
     end
-    IO.inspect(map)
-    # Enum.each 1..num_nodes, fn(x) ->
 
+    total_messages = num_requests* num_nodes
+		Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => :aggregator, :start => {Tapestryclasses.Aggregator, :start_link, [total_messages, script_pid]}, :restart => :transient,:type => :worker})
+    map
 
-	  # end
-		Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => :aggregator, :start => {Tapestryclasses.Aggregator, :start_link, [script_pid]}, :restart => :transient,:type => :worker})
   end
 
   def get_guid(pid) do

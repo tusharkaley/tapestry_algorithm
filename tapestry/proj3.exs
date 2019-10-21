@@ -18,14 +18,30 @@ try do
 	IO.puts("The number of children is #{inspect Supervisor.count_children(Tapestryclasses.Supervisor)}")
 
   # Call to helper function to add the given number of workers to the Supervisor
-  id_to_pid = Tapestryclasses.Utils.add_children(Tapestryclasses.Node, num_nodes, self())
+  id_to_pid = Tapestryclasses.Utils.add_children(Tapestryclasses.Node, num_requests, num_nodes, self())
 
   pid_to_id = Enum.reduce(id_to_pid, %{}, fn {k, vs}, acc ->
     Map.put(acc,vs,k)
   end)
+
   Tapestryclasses.Utils.set_id_pid_table(id_to_pid, pid_to_id)
 
-  IO.puts("The number of children is #{inspect Supervisor.count_children(Tapestryclasses.Supervisor)}")
+  guids = Map.keys(id_to_pid)
+  Enum.each(guids, fn x->
+    id_to_pid_temp = id_to_pid
+    {val, id_to_pid_temp} = Map.pop(id_to_pid_temp, x)
+    id_to_pid_temp = Map.keys(id_to_pid_temp)
+    dest = Enum.take_random(id_to_pid_temp, num_requests)
+    Enum.each(dest, fn y ->
+      # Send message to destination (y) from the source (x)
+    end)
+  end
+  )
+  
+  receive do
+    {:terminate_now, _pid} -> IO.puts("Terminating Supervisor")
+  end
+  Supervisor.stop(Tapestryclasses.Supervisor)
 rescue
 	e in ArgumentError ->  e
 	System.stop(1)
