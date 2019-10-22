@@ -81,7 +81,7 @@ defmodule Tapestryclasses.Node do
   update it in the state
 """
   def handle_cast({:update_state, _levels}, node_state) do
-
+    Logger.debug("Creating routing table for #{inspect self()}")
     # Based on initial assumption of what the routing table will look like
     # Any logic to create the routing table and update it in the state goes here
 
@@ -94,6 +94,9 @@ defmodule Tapestryclasses.Node do
     # node_state = Map.put(node_state, :l7, Map.get(levels, "l7"))
     # node_state = Map.put(node_state, :l8, Map.get(levels, "l8"))
     # node_state = Map.put(node_state, :l9, Map.get(levels, "l9"))
+    # Process.sleep(1000)
+    Tapestryclasses.Aggregator.routing_table_done()
+
     {:noreply, node_state}
   end
 end
