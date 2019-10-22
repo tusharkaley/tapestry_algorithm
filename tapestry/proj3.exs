@@ -26,18 +26,28 @@ try do
 
   Tapestryclasses.Utils.set_id_pid_table(id_to_pid, pid_to_id)
 
+  # List of all GUIDs
   guids = Map.keys(id_to_pid)
+  # Initiate creation of routing tables
+  receive do
+    {:routing_tables_ready, _pid} -> IO.puts("Routing tables ready. Can send messages now")
+  end
+  # The assumption here is that the routing tables are ready.
+  # Maybe will have to give this some more thought
+
   Enum.each(guids, fn x->
+
     id_to_pid_temp = id_to_pid
     {val, id_to_pid_temp} = Map.pop(id_to_pid_temp, x)
     id_to_pid_temp = Map.keys(id_to_pid_temp)
     dest = Enum.take_random(id_to_pid_temp, num_requests)
+
     Enum.each(dest, fn y ->
       # Send message to destination (y) from the source (x)
     end)
   end
   )
-  
+
   receive do
     {:terminate_now, _pid} -> IO.puts("Terminating Supervisor")
   end

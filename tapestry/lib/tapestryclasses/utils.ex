@@ -22,7 +22,7 @@ defmodule Tapestryclasses.Utils do
     end
 
     total_messages = num_requests* num_nodes
-		Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => :aggregator, :start => {Tapestryclasses.Aggregator, :start_link, [total_messages, script_pid]}, :restart => :transient,:type => :worker})
+		Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => :aggregator, :start => {Tapestryclasses.Aggregator, :start_link, [total_messages, script_pid, num_nodes]}, :restart => :transient,:type => :worker})
     map
 
   end
