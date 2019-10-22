@@ -2,7 +2,7 @@ defmodule Tapestryclasses.Utils do
   	@doc """
 		Function to get the child Spec for the workers
 	"""
-	def add_children(child_class, num_nodes, script_pid) do
+	def add_children(child_class, num_requests, num_nodes, script_pid) do
 
     map = Enum.reduce 1..num_nodes, %{}, fn x, acc ->
 
@@ -16,16 +16,31 @@ defmodule Tapestryclasses.Utils do
           # No collisions FTW
           String.slice(sha_id, -8, 8)
         end
-      {:ok, child} = Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => sha_id, :start => {child_class, :start_link, [x]}, :restart => :transient,:type => :worker})
+      {:ok, child} = Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => sha_id, :start => {child_class, :start_link, []}, :restart => :transient,:type => :worker})
 
       Map.put(acc, sha_id, child)
     end
-    IO.inspect(map)
-    # Enum.each 1..num_nodes, fn(x) ->
 
+    total_messages = num_requests* num_nodes
+    {:ok, agg} = Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => :aggregator, :start => {Tapestryclasses.Aggregator, :start_link, [total_messages, script_pid, num_nodes]}, :restart => :transient,:type => :worker})
+    IO.puts("Started the aggregator at #{inspect agg}")
+    map
 
-	  # end
-		Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => :aggregator, :start => {Tapestryclasses.Aggregator, :start_link, [script_pid]}, :restart => :transient,:type => :worker})
-	end
+  end
 
+  def get_guid(pid) do
+    [head| _tail] = :ets.lookup(:id_pid_mapping, "pid_to_id")
+    pid_to_id = elem(head, 1)
+    guid = Map.get(pid_to_id, pid)
+    guid
+  end
+
+  def set_id_pid_table(id_to_pid, pid_to_id) do
+    :ets.new(:id_pid_mapping, [:named_table, read_concurrency: true])
+    :ets.insert(:id_pid_mapping, {"id_to_pid", id_to_pid})
+
+    :ets.new(:pid_id_mapping, [:named_table, read_concurrency: true])
+    :ets.insert(:pid_id_mapping, {"pid_to_id", pid_to_id})
+
+  end
 end
