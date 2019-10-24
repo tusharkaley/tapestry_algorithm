@@ -44,7 +44,7 @@ try do
   # Maybe will have to give this some more thought
 
   # This is the code to send messages once the routing tables are ready
-  message ="sondesh"
+  message ="message"
   Enum.each(pids, fn x->
     x_guid = Map.get pid_to_id, x
     id_to_pid_temp = id_to_pid
@@ -65,6 +65,10 @@ try do
     {:terminate_now, _pid} -> IO.puts("Terminating Supervisor")
   end
   Supervisor.stop(Tapestryclasses.Supervisor)
+  final_time = Time.utc_now()
+  time_diff = Time.diff(final_time, start_time, :millisecond)
+  IO.puts("Total time taken #{time_diff} milliseconds")
+
 rescue
 	e in ArgumentError ->  e
 	System.stop(1)

@@ -44,8 +44,8 @@ defmodule Tapestryclasses.Node do
   """
   def handle_cast({:add_node,newNode_guid}, node_state) do
     routingTable = Map.get node_state, "routingTable"
-    
-  end 
+
+  end
  @doc """
   Server side function to handle what happens when a message is received
  """
@@ -73,9 +73,9 @@ defmodule Tapestryclasses.Node do
 
     else
       IO.puts "Oops: Entry not found! levelhop #{levelHop}, dest #{destination_addr}, tup #{inspect tup}, table #{inspect routingTable}"
-      
+
     end
-   
+
       # Need to make one more hop!
       # cond do
       #   last_hop == 1 -> IO.puts("Send message with an l2 hop (1 match) #{message}")
@@ -88,7 +88,7 @@ defmodule Tapestryclasses.Node do
       #   last_hop == 8 -> IO.puts("Send message with an l9 hop (8 matches) #{message}")
       # end
     end
-    
+
     {:noreply, node_state}
   end
 
@@ -128,7 +128,7 @@ defmodule Tapestryclasses.Node do
   update it in the state
 """
   def handle_cast({:update_state}, node_state) do
-    Logger.debug("Creating routing table for #{inspect self()}")
+    # Logger.debug("Creating routing table for #{inspect self()}")
     me = Tapestryclasses.Utils.get_guid(self())
     # Logger.debug("My guid #{me}")
     [head| _tail] = :ets.lookup(:pid_id_mapping, "pid_to_id")
@@ -139,7 +139,7 @@ defmodule Tapestryclasses.Node do
       pos = mismatchPosition(me,x,0)
       val = String.at(x,pos)
       tup = {pos+1, val}
-      entry = 
+      entry =
       if Map.has_key? acc, tup do
         findCloser(Map.get(acc,tup), x, me)
       else
@@ -147,7 +147,7 @@ defmodule Tapestryclasses.Node do
       end
       Map.put(acc, tup, entry)
     end
-    
+
     node_state = Map.put node_state, "routingTable", map
     # IO.inspect(node_state)
     # Based on initial assumption of what the routing table will look like
@@ -168,8 +168,8 @@ defmodule Tapestryclasses.Node do
     {:noreply, node_state}
   end
   def mismatchPosition(i,x,position) do
-    if position < String.length x do 
-        mismatch = 
+    if position < String.length x do
+        mismatch =
         if String.at(i,position) != String.at(x,position) do
             position
         else
