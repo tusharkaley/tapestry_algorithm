@@ -29,7 +29,7 @@ try do
   # Right now just adding all routing tables
   start_time = Time.utc_now()
   Enum.each(pids, fn x->
-    Tapestryclasses.Node.update_state(x, 1)
+    Tapestryclasses.Node.update_state(x)
   end)
 
   receive do
@@ -44,23 +44,27 @@ try do
   # Maybe will have to give this some more thought
 
   # This is the code to send messages once the routing tables are ready
-  # Enum.each(guids, fn x->
+  message ="sondesh"
+  Enum.each(pids, fn x->
+    x_guid = Map.get pid_to_id, x
+    id_to_pid_temp = id_to_pid
+    {val, id_to_pid_temp} = Map.pop(id_to_pid_temp, x_guid)
 
-  #   id_to_pid_temp = id_to_pid
-  #   {val, id_to_pid_temp} = Map.pop(id_to_pid_temp, x)
-  #   id_to_pid_temp = Map.keys(id_to_pid_temp)
-  #   dest = Enum.take_random(id_to_pid_temp, num_requests)
+    id_to_pid_temp = Map.keys(id_to_pid_temp)
+    dest = Enum.take_random(id_to_pid_temp, num_requests)
 
-  #   Enum.each(dest, fn y ->
-  #     # Send message to destination (y) from the source (x)
-  #   end)
-  # end
-  # )
+    Enum.each(dest, fn y ->
+      # IO.puts "Send message from #{x} to #{y}"
+      Tapestryclasses.Node.send_first_message(x, y, message)
+      # Send message to destination (y) from the source (x)
+    end)
+  end
+  )
 
-  # receive do
-  #   {:terminate_now, _pid} -> IO.puts("Terminating Supervisor")
-  # end
-  # Supervisor.stop(Tapestryclasses.Supervisor)
+  receive do
+    {:terminate_now, _pid} -> IO.puts("Terminating Supervisor")
+  end
+  Supervisor.stop(Tapestryclasses.Supervisor)
 rescue
 	e in ArgumentError ->  e
 	System.stop(1)

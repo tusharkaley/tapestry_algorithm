@@ -29,10 +29,17 @@ defmodule Tapestryclasses.Utils do
   end
 
   def get_guid(pid) do
-    [head| _tail] = :ets.lookup(:id_pid_mapping, "pid_to_id")
+    [head| _tail] = :ets.lookup(:pid_id_mapping, "pid_to_id")
     pid_to_id = elem(head, 1)
     guid = Map.get(pid_to_id, pid)
     guid
+  end
+
+  def get_pid(guid) do
+    [head| _tail] = :ets.lookup(:id_pid_mapping, "id_to_pid")
+    id_to_pid = elem(head, 1)
+    pid = Map.get(id_to_pid, guid)
+    pid
   end
 
   def set_id_pid_table(id_to_pid, pid_to_id) do
@@ -41,6 +48,7 @@ defmodule Tapestryclasses.Utils do
 
     :ets.new(:pid_id_mapping, [:named_table, read_concurrency: true])
     :ets.insert(:pid_id_mapping, {"pid_to_id", pid_to_id})
+    IO.puts("Set pid_to_id table in ets")
 
   end
 end
