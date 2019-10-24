@@ -22,17 +22,23 @@ defmodule Tapestryclasses.Utils do
     end
 
     total_messages = num_requests* num_nodes
-    {:ok, agg} = Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => :aggregator, :start => {Tapestryclasses.Aggregator, :start_link, [total_messages, script_pid, num_nodes]}, :restart => :transient,:type => :worker})
-    IO.puts("Started the aggregator at #{inspect agg}")
+    {:ok, _agg} = Supervisor.start_child(Tapestryclasses.Supervisor, %{:id => :aggregator, :start => {Tapestryclasses.Aggregator, :start_link, [total_messages, script_pid, num_nodes]}, :restart => :transient,:type => :worker})
     map
 
   end
 
   def get_guid(pid) do
-    [head| _tail] = :ets.lookup(:id_pid_mapping, "pid_to_id")
+    [head| _tail] = :ets.lookup(:pid_id_mapping, "pid_to_id")
     pid_to_id = elem(head, 1)
     guid = Map.get(pid_to_id, pid)
     guid
+  end
+
+  def get_pid(guid) do
+    [head| _tail] = :ets.lookup(:id_pid_mapping, "id_to_pid")
+    id_to_pid = elem(head, 1)
+    pid = Map.get(id_to_pid, guid)
+    pid
   end
 
   def set_id_pid_table(id_to_pid, pid_to_id) do

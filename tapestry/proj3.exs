@@ -21,15 +21,15 @@ try do
   Tapestryclasses.Utils.set_id_pid_table(id_to_pid, pid_to_id)
 
   # List of all GUIDs
-  guids = Map.keys(id_to_pid)
   pids = Map.keys(pid_to_id)
   # Initiate creation of routing tables
   # TODO: Now that we have to dynamically add nodes as well we'll maybe just create tables for 95% of the nodes and
   # AFTER that step is done then we add the remaining nodes and handle the update table case
   # Right now just adding all routing tables
   start_time = Time.utc_now()
+  IO.puts("Triggering creation of routing tables")
   Enum.each(pids, fn x->
-    Tapestryclasses.Node.update_state(x, 1)
+    Tapestryclasses.Node.update_state(x)
   end)
 
   receive do
@@ -44,24 +44,32 @@ try do
   # Maybe will have to give this some more thought
 
   # This is the code to send messages once the routing tables are ready
-  # Enum.each(guids, fn x->
+  message ="message"
+  Enum.each(pids, fn x->
+    x_guid = Map.get pid_to_id, x
+    id_to_pid_temp = id_to_pid
+    {_val, id_to_pid_temp} = Map.pop(id_to_pid_temp, x_guid)
 
-  #   id_to_pid_temp = id_to_pid
-  #   {val, id_to_pid_temp} = Map.pop(id_to_pid_temp, x)
-  #   id_to_pid_temp = Map.keys(id_to_pid_temp)
-  #   dest = Enum.take_random(id_to_pid_temp, num_requests)
+    id_to_pid_temp = Map.keys(id_to_pid_temp)
+    dest = Enum.take_random(id_to_pid_temp, num_requests)
 
-  #   Enum.each(dest, fn y ->
-  #     # Send message to destination (y) from the source (x)
-  #   end)
-  # end
-  # )
+    Enum.each(dest, fn y ->
+      # IO.puts "Send message from #{x} to #{y}"
+      Tapestryclasses.Node.send_first_message(x, y, message)
+      # Send message to destination (y) from the source (x)
+    end)
+  end
+  )
 
-  # receive do
-  #   {:terminate_now, _pid} -> IO.puts("Terminating Supervisor")
-  # end
-  # Supervisor.stop(Tapestryclasses.Supervisor)
+  receive do
+    {:terminate_now, _pid} -> IO.puts("Terminating Supervisor")
+  end
+  Supervisor.stop(Tapestryclasses.Supervisor)
+  final_time = Time.utc_now()
+  time_diff = Time.diff(final_time, start_time, :millisecond)
+  IO.puts("Total time taken #{time_diff} milliseconds")
+
 rescue
-	e in ArgumentError ->  e
+	_e in ArgumentError ->  IO.puts("Script Failed!")
 	System.stop(1)
 end
