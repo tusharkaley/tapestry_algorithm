@@ -21,13 +21,13 @@ try do
   Tapestryclasses.Utils.set_id_pid_table(id_to_pid, pid_to_id)
 
   # List of all GUIDs
-  guids = Map.keys(id_to_pid)
   pids = Map.keys(pid_to_id)
   # Initiate creation of routing tables
   # TODO: Now that we have to dynamically add nodes as well we'll maybe just create tables for 95% of the nodes and
   # AFTER that step is done then we add the remaining nodes and handle the update table case
   # Right now just adding all routing tables
   start_time = Time.utc_now()
+  IO.puts("Triggering creation of routing tables")
   Enum.each(pids, fn x->
     Tapestryclasses.Node.update_state(x)
   end)
@@ -48,7 +48,7 @@ try do
   Enum.each(pids, fn x->
     x_guid = Map.get pid_to_id, x
     id_to_pid_temp = id_to_pid
-    {val, id_to_pid_temp} = Map.pop(id_to_pid_temp, x_guid)
+    {_val, id_to_pid_temp} = Map.pop(id_to_pid_temp, x_guid)
 
     id_to_pid_temp = Map.keys(id_to_pid_temp)
     dest = Enum.take_random(id_to_pid_temp, num_requests)
@@ -70,6 +70,6 @@ try do
   IO.puts("Total time taken #{time_diff} milliseconds")
 
 rescue
-	e in ArgumentError ->  e
+	_e in ArgumentError ->  IO.puts("Script Failed!")
 	System.stop(1)
 end

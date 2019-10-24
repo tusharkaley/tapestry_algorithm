@@ -34,7 +34,7 @@ defmodule Tapestryclasses.Aggregator do
   def handle_cast({:log_hops, hops, source}, node_state) do
     state_hops = node_state["max_hops"]
     node_state = if state_hops < hops do
-                  Logger.error("Max updated! Its #{hops} now")
+                  Logger.debug("Max updated! Its #{hops} now")
                   node_state = Map.put(node_state, "max_hops", hops)
                   Map.put(node_state, "dest_addr", source)
                 else

@@ -47,7 +47,6 @@ defmodule Tapestryclasses.Utils do
 
     :ets.new(:pid_id_mapping, [:named_table, read_concurrency: true])
     :ets.insert(:pid_id_mapping, {"pid_to_id", pid_to_id})
-    IO.puts("Set pid_to_id table in ets")
 
   end
 end
