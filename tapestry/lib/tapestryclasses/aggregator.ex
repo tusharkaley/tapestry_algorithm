@@ -70,12 +70,16 @@ defmodule Tapestryclasses.Aggregator do
     end
     {:noreply, node_state}
   end
-  def handle_cast({:dynamic_nodes_coming, dynamic_nodes, pids, pid_to_id}) do
+  def handle_cast({:dynamic_nodes_coming, dynamic_nodes, pids, pid_to_id}, node_state) do
+    Process.sleep(1000)
+    Logger.debug("Dynamic nodes coming one by one now")
+
     Enum.each pids, fn x->
       Enum.each dynamic_nodes, fn d_node ->
         dynamic_node_guid = Map.get pid_to_id, d_node
       Tapestryclasses.Node.update_routing(x,dynamic_node_guid)
       end
     end
+    {:noreply, node_state}
   end
 end

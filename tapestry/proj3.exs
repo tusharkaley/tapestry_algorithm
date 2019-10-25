@@ -64,32 +64,25 @@ try do
   message ="message"
   # len = length pids
   IO.puts("Started sending messages")
+  sent = 0
+  Tapestryclasses.Aggregator.send_in_the_clowns(dynamic_nodes, pids, pid_to_id)
   Enum.each(pids, fn x->
     x_guid = Map.get pid_to_id, x
+
     id_to_pid_temp = id_to_pid
     {_val, id_to_pid_temp} = Map.pop(id_to_pid_temp, x_guid)
-
     id_to_pid_temp = Map.keys(id_to_pid_temp)
     dest = Enum.take_random(id_to_pid_temp, num_requests)
 
     Enum.each(dest, fn y ->
       # IO.puts "Send message from #{x} to #{y}"
       Tapestryclasses.Node.send_first_message(x, y, message)
-      Process.sleep(100)
+      # Process.sleep(10)
       # Send message to destination (y) from the source (x)
     end)
+
   end
   )
-  #Update the routing tables for all nodes:
-  IO.puts("Dynamic nodes now coming up one by one")
-  Enum.each pids, fn x->
-    Enum.each dynamic_nodes, fn d_node ->
-      dynamic_node_guid = Map.get pid_to_id, d_node
-    Tapestryclasses.Node.update_routing(x,dynamic_node_guid)
-    end
-  end
-  IO.puts("Dynamic nodes sending messages")
-
   #Send message from new nodes:
   Enum.each dynamic_nodes, fn d_node ->
     dynamic_node_guid = Map.get pid_to_id, d_node
