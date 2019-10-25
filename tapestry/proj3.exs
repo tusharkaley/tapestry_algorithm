@@ -64,7 +64,6 @@ try do
   message ="message"
   # len = length pids
   IO.puts("Started sending messages")
-  sent = 0
   Tapestryclasses.Aggregator.send_in_the_clowns(dynamic_nodes, pids, pid_to_id)
   Enum.each(pids, fn x->
     x_guid = Map.get pid_to_id, x
