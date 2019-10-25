@@ -1,7 +1,7 @@
 defmodule Tapestryclasses.Aggregator do
   use GenServer
   require Logger
-
+  @dynamic_nodes 10
   def start_link(total_nodes, script_pid, num_nodes) do
     GenServer.start_link(__MODULE__, [total_nodes, script_pid, num_nodes], [name: :aggregator])
   end
@@ -17,6 +17,10 @@ defmodule Tapestryclasses.Aggregator do
   """
   def routing_table_done() do
     GenServer.cast(:aggregator, {:routing_table})
+  end
+
+  def send_in_the_clowns(dynamic_node_ids, all_pids, pid_to_id) do
+    GenServer.cast(:aggregator, {:dynamic_nodes_coming, dynamic_node_ids, all_pids, pid_to_id})
   end
 @doc """
   Init function to set the state of the genserver
@@ -42,14 +46,11 @@ defmodule Tapestryclasses.Aggregator do
                 end
     node_state = Map.put(node_state, "num_nodes_done", node_state["num_nodes_done"] + 1)
     num_nodes_done = node_state["num_nodes_done"]
-    # IO.puts "Number donedone = #{num_nodes_done}"
     if num_nodes_done == node_state["total_nodes"] do
       # Time to terminate
       maxHopsTaken = node_state["max_hops"]
-      IO.puts("Maximum hops: #{maxHopsTaken} by nodes = #{num_nodes_done}")
+      IO.puts("Maximum hops: #{maxHopsTaken}")
       send(node_state["terminate_addr"], {:terminate_now, self()})
-    # else
-    #   IO.puts "Don't terminate yet"
     end
     # IO.inspect(node_state)
     {:noreply, node_state}
@@ -62,14 +63,19 @@ defmodule Tapestryclasses.Aggregator do
     # IO.inspect(node_state)
     num_nodes_rt = node_state["num_nodes_rt"] + 1
     node_state = Map.put(node_state, "num_nodes_rt", num_nodes_rt)
-    # if rem(num_nodes_rt, 500) == 0 do
-    #   Logger.debug("#{num_nodes_rt} routing tables done")
-    # end
-    # Logger.debug("Num nodes done #{num_nodes_rt}")
-    if num_nodes_rt == (node_state["num_nodes"] -10)do
+
+    if num_nodes_rt == (node_state["num_nodes"] - @dynamic_nodes)do
       # Logger.debug("All routing tables are ready")
       send(node_state["terminate_addr"], {:routing_tables_ready, self()})
     end
     {:noreply, node_state}
+  end
+  def handle_cast({:dynamic_nodes_coming, dynamic_nodes, pids, pid_to_id}) do
+    Enum.each pids, fn x->
+      Enum.each dynamic_nodes, fn d_node ->
+        dynamic_node_guid = Map.get pid_to_id, d_node
+      Tapestryclasses.Node.update_routing(x,dynamic_node_guid)
+      end
+    end
   end
 end

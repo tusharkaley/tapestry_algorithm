@@ -1,5 +1,5 @@
 
-
+dynamic_num_nodes = 10
 try do
   # Check if we have correct arguments
 
@@ -23,47 +23,32 @@ try do
   # List of all GUIDs
   pids = Map.keys(pid_to_id)
   # Initiate creation of routing tables
-  # TODO: Now that we have to dynamically add nodes as well we'll maybe just create tables for 95% of the nodes and
-  # AFTER that step is done then we add the remaining nodes and handle the update table case
-  # Right now just adding all routing tables
+
   start_time = Time.utc_now()
-  IO.puts("Triggering creation of routing tables")
-  #Remove 10 nodes, to be added later
-  dynamic_nodes = Enum.take_random pids, 10
+  IO.puts("Triggering creation of routing tables for #{num_nodes - dynamic_num_nodes} nodes.")
+  IO.puts("Rest of the #{dynamic_num_nodes} will be added dynamically")
+  #Remove k nodes, to be added later
+  dynamic_nodes = Enum.take_random pids, dynamic_num_nodes
 
   pids = pids -- dynamic_nodes
 
-  # pids = Enum.each dynamic_nodes, fn d_node ->
-  #   # dynamic_node_guid = Map.get pid_to_id, d_node
-  #   List.delete pids, d_node
-  #   # IO.puts "Deleting #{dynamic_node_guid} from map"
-  #   # id_to_pid = Map.delete id_to_pid, dynamic_node_guid
-  # end
-  # id_to_pid = Enum.each dynamic_nodes, fn d_node->
-  #   dynamic_node_guid = Map.get pid_to_id, d_node
-    
-  #   # {_val , id_to_pid_temp} = Map.pop id_to_pid, dynamic_node_guid
-  #   # IO.inspect(id_to_pid_temp)
-  #   # id_to_pid_temp
-  # end
-  dynamicGuids = 
-  Enum.reduce dynamic_nodes, [], fn (d_node, acc) ->
+  dynamicGuids =  Enum.reduce dynamic_nodes, [], fn (d_node, acc) ->
     dynamic_node_guid = Map.get pid_to_id, d_node
     [dynamic_node_guid | acc]
    end
+
   id_to_pid= Map.drop id_to_pid, dynamicGuids
 
-    Enum.each(pids, fn x->
+  Enum.each(pids, fn x->
       Tapestryclasses.Node.update_state(x)
   end)
 
   receive do
-    {:routing_tables_ready, _pid} -> IO.puts("Routing tables ready. Can send messages now")
+    {:routing_tables_ready, _pid} -> IO.puts("Routing tables ready for #{num_nodes - dynamic_num_nodes} nodes. Can send messages now")
   end
   end_time = Time.utc_now()
   time_diff = Time.diff(end_time, start_time, :millisecond)
   IO.puts("Creation of routing tables takes #{time_diff} milliseconds")
-  # TODO: Logic for dynamically adding the rest of the routing tables goes here
 
   # The assumption here is that the routing tables are ready.
   # Maybe will have to give this some more thought
@@ -73,11 +58,12 @@ try do
   Enum.each dynamic_nodes, fn d_node ->
    Tapestryclasses.Node.update_state(d_node)
   end
-  
+
   #choose num dest and send mesages:
 
   message ="message"
-  len = length pids
+  # len = length pids
+  IO.puts("Started sending messages")
   Enum.each(pids, fn x->
     x_guid = Map.get pid_to_id, x
     id_to_pid_temp = id_to_pid
@@ -89,17 +75,20 @@ try do
     Enum.each(dest, fn y ->
       # IO.puts "Send message from #{x} to #{y}"
       Tapestryclasses.Node.send_first_message(x, y, message)
+      Process.sleep(100)
       # Send message to destination (y) from the source (x)
     end)
   end
   )
   #Update the routing tables for all nodes:
-  Enum.each pids, fn x-> 
+  IO.puts("Dynamic nodes now coming up one by one")
+  Enum.each pids, fn x->
     Enum.each dynamic_nodes, fn d_node ->
       dynamic_node_guid = Map.get pid_to_id, d_node
     Tapestryclasses.Node.update_routing(x,dynamic_node_guid)
     end
   end
+  IO.puts("Dynamic nodes sending messages")
 
   #Send message from new nodes:
   Enum.each dynamic_nodes, fn d_node ->
