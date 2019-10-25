@@ -35,7 +35,7 @@ defmodule Tapestryclasses.Node do
   @doc """
    Client side function to add new node to the network
   """
-  def new_node(pid,newNode_guid) do
+  def update_routing(pid,newNode_guid) do
     GenServer.cast(pid, {:add_node,newNode_guid})
   end
 
@@ -43,9 +43,23 @@ defmodule Tapestryclasses.Node do
     Add new node to network
   """
   def handle_cast({:add_node,newNode_guid}, node_state) do
+    self_id = Tapestryclasses.Utils.get_guid(self())
     routingTable = Map.get node_state, "routingTable"
+    pos = mismatchPosition self_id, newNode_guid, 0
+    val = String.at newNode_guid, pos
+    tup = {pos+1,val}
+
+    if Map.has_key? routingTable,tup do
+      entry_add= findCloser(Map.get(routingTable,tup), newNode_guid, self_id)
+      routingTable = Map.put_new routingTable, tup, entry_add
+    else
+      routingTable = Map.put_new routingTable, tup,newNode_guid
+    end
+    node_state = Map.put node_state, "routingTable", routingTable
+    {:noreply, node_state}
 
   end
+
  @doc """
   Server side function to handle what happens when a message is received
  """

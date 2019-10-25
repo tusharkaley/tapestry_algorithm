@@ -28,8 +28,33 @@ try do
   # Right now just adding all routing tables
   start_time = Time.utc_now()
   IO.puts("Triggering creation of routing tables")
-  Enum.each(pids, fn x->
-    Tapestryclasses.Node.update_state(x)
+  #Remove 10 nodes, to be added later
+  dynamic_nodes = Enum.take_random pids, 10
+
+  pids = pids -- dynamic_nodes
+
+  # pids = Enum.each dynamic_nodes, fn d_node ->
+  #   # dynamic_node_guid = Map.get pid_to_id, d_node
+  #   List.delete pids, d_node
+  #   # IO.puts "Deleting #{dynamic_node_guid} from map"
+  #   # id_to_pid = Map.delete id_to_pid, dynamic_node_guid
+  # end
+  # id_to_pid = Enum.each dynamic_nodes, fn d_node->
+  #   dynamic_node_guid = Map.get pid_to_id, d_node
+    
+  #   # {_val , id_to_pid_temp} = Map.pop id_to_pid, dynamic_node_guid
+  #   # IO.inspect(id_to_pid_temp)
+  #   # id_to_pid_temp
+  # end
+  dynamicGuids = 
+  Enum.reduce dynamic_nodes, [], fn (d_node, acc) ->
+    dynamic_node_guid = Map.get pid_to_id, d_node
+    [dynamic_node_guid | acc]
+   end
+  id_to_pid= Map.drop id_to_pid, dynamicGuids
+
+    Enum.each(pids, fn x->
+      Tapestryclasses.Node.update_state(x)
   end)
 
   receive do
@@ -44,7 +69,15 @@ try do
   # Maybe will have to give this some more thought
 
   # This is the code to send messages once the routing tables are ready
+  #Add new node dynamically:
+  Enum.each dynamic_nodes, fn d_node ->
+   Tapestryclasses.Node.update_state(d_node)
+  end
+  
+  #choose num dest and send mesages:
+
   message ="message"
+  len = length pids
   Enum.each(pids, fn x->
     x_guid = Map.get pid_to_id, x
     id_to_pid_temp = id_to_pid
@@ -60,6 +93,31 @@ try do
     end)
   end
   )
+  #Update the routing tables for all nodes:
+  Enum.each pids, fn x-> 
+    Enum.each dynamic_nodes, fn d_node ->
+      dynamic_node_guid = Map.get pid_to_id, d_node
+    Tapestryclasses.Node.update_routing(x,dynamic_node_guid)
+    end
+  end
+
+  #Send message from new nodes:
+  Enum.each dynamic_nodes, fn d_node ->
+    dynamic_node_guid = Map.get pid_to_id, d_node
+    id_to_pid_temp = id_to_pid
+    {_val, id_to_pid_temp} = Map.pop(id_to_pid_temp, dynamic_node_guid)
+
+    id_to_pid_temp = Map.keys(id_to_pid_temp)
+    dest = Enum.take_random(id_to_pid_temp, num_requests)
+
+    Enum.each(dest, fn y ->
+      # IO.puts "Send message from #{x} to #{y}"
+      Tapestryclasses.Node.send_first_message(d_node, y, message)
+      # Send message to destination (y) from the source (x)
+    end)
+
+  end
+
 
   receive do
     {:terminate_now, _pid} -> IO.puts("Terminating Supervisor")

@@ -46,7 +46,7 @@ defmodule Tapestryclasses.Aggregator do
     if num_nodes_done == node_state["total_nodes"] do
       # Time to terminate
       maxHopsTaken = node_state["max_hops"]
-      IO.puts("Maximum hops: #{maxHopsTaken}")
+      IO.puts("Maximum hops: #{maxHopsTaken} by nodes = #{num_nodes_done}")
       send(node_state["terminate_addr"], {:terminate_now, self()})
     # else
     #   IO.puts "Don't terminate yet"
@@ -66,7 +66,7 @@ defmodule Tapestryclasses.Aggregator do
     #   Logger.debug("#{num_nodes_rt} routing tables done")
     # end
     # Logger.debug("Num nodes done #{num_nodes_rt}")
-    if num_nodes_rt == node_state["num_nodes"] do
+    if num_nodes_rt == (node_state["num_nodes"] -10)do
       # Logger.debug("All routing tables are ready")
       send(node_state["terminate_addr"], {:routing_tables_ready, self()})
     end
