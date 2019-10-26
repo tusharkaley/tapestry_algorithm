@@ -1,0 +1,11 @@
+{application,tapestry,
+             [{applications,[kernel,stdlib,elixir,logger]},
+              {description,"tapestry"},
+              {modules,['Elixir.Tapestry','Elixir.TapestryApp',
+                        'Elixir.Tapestryclasses.Aggregator',
+                        'Elixir.Tapestryclasses.Node',
+                        'Elixir.Tapestryclasses.Supervisor',
+                        'Elixir.Tapestryclasses.Utils']},
+              {registered,[]},
+              {vsn,"0.1.0"},
+              {mod,{'Elixir.TapestryApp',[]}}]}.
